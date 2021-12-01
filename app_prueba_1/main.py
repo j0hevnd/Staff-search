@@ -1,157 +1,155 @@
 import os
 import time
+import json
+import csv
 import geopy
-import geopy.geocoders
+import ssl
 
-from geopy.geocoders import Nominatim
+import geopy.geocoders
 from geopy import distance
+from geopy.exc import GeocoderTimedOut
+# from geopy.geocoders import Nominatim
 
 
 class LocationResources():
-    """ Ubicacion de recursos de una empresa """
+    """Package delivery management"""
 
-    count = 0
-    distance_menor = 30
-    location_pkgs = []
-    cant_pkgs = {}
+    # Range of delivery and collection of packages
+    less_distance = 30
+    _ctx = ssl.create_default_context()
+    _ctx.check_hostname = False
+    _ctx.verify_mode = ssl.CERT_NONE
+    geopy.geocoders.options.default_ssl_context = _ctx
 
     geopy.geocoders.options.default_user_agent = 'app_prueba_1'
-    DEFAULT_SENTINEL = geopy.geocoders.options.default_timeout = 4
-    geolocator = Nominatim()
+    DEFAULT_SENTINEL = geopy.geocoders.options.default_timeout = 5
+    geolocator = geopy.geocoders.Nominatim(scheme='http')
+    
+    def __init__(self, address_company="Carrera 48A Poblado, Medellin, Antioquia"):
+        """LocationResources constructor
 
-    # Identificar el punto donde esta ubicada la empresa
-    address_siata = "Carrera 48A Poblado, Medellin, Antioquia"
-    # Obtenemos direccion completa
-    _location_business = geolocator.geocode(address_siata)
+        Args:
+            address_company (str, optional): Shipping company location. 
+            Defaults to "Carrera 48A Poblado, Medellin, Antioquia".
+        """
+        self.count = 0
+        self.cant_pkgs = {}
+        self.address_company = address_company
+        
+        
+    def get_location(self, adrress):
+        """ Solve a geolocation from a given string.
+        Args:
+            adrress (str): Location
+
+        Returns:
+            [class 'geopy.location.Location']: Geopy type instance to improve location usage
+        """
+        try:
+            return self.geolocator.geocode(adrress, timeout=self.DEFAULT_SENTINEL)
+        except GeocoderTimedOut as e:
+            print(f"Error ocurrido por: {e}")
+            # raise
     
 
     def _long_lat(self, location_current, location_dest):
-        """ obtenemos longitud y latitud para medir distancia entre dos puntos """
+        """We obtain longitude and latitude for to mesure the distance beetwen two points 
 
+        Args:
+            location_current ([geopy.location.Location]): Geopy type geolocation
+            location_dest ([geopy.location.Location]): Geopy type geolocation
+
+        Returns:
+            [tuple]: Information with the latitude and longitude of the given arguments  
+        """
         long_lat_current = (location_current.latitude, location_current.longitude)
         long_lat_dest    = (location_dest.latitude, location_dest.longitude)
-
         return (long_lat_current, long_lat_dest)
 
 
     def find_vehicles(self, pickup_pkg=False):
-        """ Vehiculos con los que cuenta la empresa y los lugares donde estan """
+        """ Vehicles that the company has and places where they are
 
-        vehicles_business = [
-            {
-            "brand" : "Toyota",
-            "plate" : "XDF234",
-            "current_location" : "La Milagrosa, Medellín, Antioquia",
-            },
-            {
-            "brand" : "Mercedez Benz",
-            "plate" : "89RTY",
-            "current_location" : "Los colores, Medellín, Antioquia",
-            },
-            {
-            "brand" : "Chevrolet",
-            "plate" : "067EFL",
-            "current_location" : "Carrera 48A Poblado, Medellin, Antioquia",
-            },
-            {
-            "brand" : "Mustang",
-            "plate" : "TYH440",
-            "current_location" : "Laureles, Medellin, Antioquia",
-            },
-            {
-            "brand" : "Audi",
-            "plate" : "TRK779",
-            "current_location" : "San Antonio, Medellin, Antioquia",
-            },
-            {
-            "brand" : "Chevrolet v2",
-            "plate" : "YTU000",
-            "current_location" : "Castilla, Medellin, Antioquia",
-            },
-            {
-            "brand" : "Volvo",
-            "plate" : "KMZ441",
-            "current_location" : "Guarne, Medellin, Antioquia",
-            },
-        ]
-        
-        if pickup_pkg:
-            return vehicles_business
-        
-        def _function():
-            
-            print("=======================================")
-            print("Vehiculos disponibles:\n")
+        Args:
+            pickup_pkg (bool, optional): Define if only vehicles are returned. 
+            Defaults to False.
 
-            for vehicle in vehicles_business:
-                print(f"* {vehicle['brand']}, placa: {vehicle['plate']}")
+        Returns: None
+        """
+        # Call the vehicles archive
+        vehicles_company = json.loads(open('vehicles.json', encoding='utf8').read())
+        
+        if pickup_pkg: return vehicles_company
+        
+        def _view_vehicles():
+            """
+            View of company vehicles
+            Return: None
+            """
+            print(f"{'':=>40s}\nVehiculos disponibles:\n")
+            [print(f"* {vehicle['brand']}, placa: {vehicle['plate']}") for vehicle in vehicles_company]
+                
 
         flag = True
 
-        # Buscamos donde se encuentra un vehiculo
+        # Search where a vehicle located
         while flag:
-            exists_veh = False # para validar que exista el vehiculo
-            
-            _function()
-
-            chossen_option = input("""
-=======================================
+            _view_vehicles()
+            chossen_option = input(f"""
+{'':=>40s}
 Escoja una opción:
 
-1) Verificar ubicación de un vehiculo
+1) Verificar ubicación de un vehículo
 99) Atrás
 
 Ingrese el número de la opción: """)
-
-
 
             if chossen_option == "1":
                 continue_flag = True
                 count_calls_function = 0
                 
                 while continue_flag:
-                    if count_calls_function == 0:
-                        pass
+                    exists_veh = False # Validate that the exist vehicle
+                    if count_calls_function == 0: pass
                     else:
-                        _function()
+                        _view_vehicles()
+                        print(f"{'':=>40s}")
+                        print("\n99) Atrás")
 
-                    print("=============================================================")
-                        
-                    plate_number = input("\n¿Cuál es la placa del vehiculo a ubicar?: ").upper()
+                    print(f"{'':=>40s}")
+                    
+                    plate_number = input("\n¿Cuál es la placa del vehículo a ubicar?: ").upper()
 
                     if plate_number == "99":
                         self.main_menu()
 
-                    for vehicle in vehicles_business:
+                    for vehicle in vehicles_company:
                         if vehicle["plate"] == plate_number:
                             exists_veh = True
                             print("\nMarca del vehiculo:", vehicle["brand"])
 
-                            location_veh = self.geolocator.geocode(vehicle["current_location"])
-                            distance_veh_bussines = self._long_lat(location_veh, self._location_business)
-                            distance_kms_business = distance.distance(distance_veh_bussines[0], distance_veh_bussines[1]).km
+                            location_veh = self.get_location(vehicle["current_location"])
+                            distance_veh_company = self._long_lat(location_veh, self.get_location(self.address_company))
+                            distance_kms_company = distance.distance(distance_veh_company[0], distance_veh_company[1]).km
 
-                            print(f"\nEl vehiculo se encuentra ubicado en: {location_veh}")
+                            print(f"\nEl vehículo se encuentra ubicado en: {location_veh}")
 
-                            if int(distance_kms_business) == 0:
-                                print("\nEl vehiculo está en la empresa")
-                            else:
-                                print(f"\nEl vehiculo está a {distance_kms_business:.2f} kilometros de la empresa")
+                            if int(distance_kms_company) == 0: print("\nEl vehiculo está en la empresa")
+                            else: print(f"\nEl vehiculo está a {distance_kms_company:.2f} kilometros de la empresa")
 
-                            ask_go_out = input("\n¿Desea verificar otro vehiculo? Y/n: ")
-                            if ask_go_out in ("Y", "y"):
-                                count_calls_function +=1
+                            get_out = input("\n¿Desea verificar otro vehículo? Y/n: ")
+                            if get_out in ("Y", "y"):
+                                count_calls_function = 1
                                 os.system("cls")
-                                pass
                             else:
                                 continue_flag = False
                                 self.main_menu()
 
                     if not exists_veh:
                         print("\n\nLa placa que ha sido ingresada no coincide con los vehiculos con los que actualmente cuenta la empresa")
-                        time.sleep(4)
+                    #     time.sleep(4)
 
-                    os.system("cls")
+                    # os.system("cls")
 
             elif chossen_option == "99":
                 flag = False
@@ -160,231 +158,211 @@ Ingrese el número de la opción: """)
             else:
                 os.system("cls")
 
-    # Busqueda del personal de la empresa
-    def find_staff(self, pickup_pkg=False):
-        staffs = [
-            {
-                "nombres": "Juana De Arco",
-                "edad"   : 20,
-                "direccion" : "Cataluña, Medellín, Antioquia",
-                "telefono" : "3220990099" 
-            },
-            {
-                "nombres": "Armin Arlert",
-                "edad"   : 19,
-                "direccion" : "Caicedo, Medellín, Antioquia",
-                "telefono" : "3125990349" 
-            },
-            {
-                "nombres": "Darwin Hernan",
-                "edad"   : 27,
-                "direccion" : "Santa Elena, Medellín, Antioquia",
-                "telefono" : "3000556054" 
-            },
-            {
-                "nombres": "Mikasa Ackerman",
-                "edad"   : 19,
-                "direccion" : "La Alpujarra, Medellín, Antioquia",
-                "telefono" : "3078965032" 
-            },
-            {
-                "nombres": "Eren Geager",
-                "edad"   : 19,
-                "direccion" : "El Estadio, Medellín, Antioquia",
-                "telefono" : "3078965032" 
-            },
-            {
-                "nombres": "Diego Díaz",
-                "edad"   : 23,
-                "direccion" : "San Cristobal, Medellín, Antioquia",
-                "telefono" : "3078965032" 
-            },
-        ]
 
+    def find_staff(self, pickup_pkg=False):
+        """ Personnel with which the company has and places where they are 
+        
+        Args:
+            pickup_pkg (bool, optional): Define if only personnel are returned.
+            Defaults to False.
+
+        Returns: None
+        """
+        # Call the personnel archive
+        staffs = json.loads(open('staff.json', encoding='utf8').read())
+        
         if pickup_pkg:
             return staffs
             
-        flag = True
+        # Displays the name of the staff
+        print(f"{'':=>40s}\nPersonal a cargo:\n")
+        [print(' - ', objects['name']) for objects in staffs]
+        print(f"\n{'':=>40s}\n99) Volver")
 
-        while flag:
+        def _find_staff():
+            """
+            Search an employee
+            Return: None
+            """
             found_staff = False
-
-            print("Personal a cargo:")
-
-            for objects in staffs:
-                for key, value in objects.items():
-                    if key == "nombres":
-                        print(' - ', value)
-
-            print("\n99) Volver")
-            
             answer_name = input("\nEscribe el nombre completo del personal que ubicaras: ").lower()
 
             if answer_name == "99":
                 self.main_menu()
 
-            for staff in staffs:
-                # Tomamos las vocales con acento y los transformamo a vocales sin acento
-                transliterar_entry_name = answer_name.maketrans('ÁÉÍÓÚáéíóú', 'AEIOUaeiou')
-                name_entry_check = answer_name.translate(transliterar_entry_name).lower()
-                
-                transliterar_name = staff['nombres'].maketrans('ÁÉÍÓÚáéíóú', 'AEIOUaeiou')
-                name_check = staff['nombres'].translate(transliterar_name).lower()
+            # Takes accented vowels and transforms them into unstressed vowels
+            transliterar_entry_name = answer_name.maketrans('ÁÉÍÓÚáéíóú', 'AEIOUaeiou')
+            name_entry_check = answer_name.translate(transliterar_entry_name).lower()
+            
+            for staff in staffs:    
+                transliterar_name = staff['name'].maketrans('ÁÉÍÓÚáéíóú', 'AEIOUaeiou')
+                name_check = staff['name'].translate(transliterar_name).lower()
 
                 if name_entry_check == name_check:
                     found_staff = True
-                    location_current = self.geolocator.geocode(staff['direccion'])
-                    distance_staff = self._long_lat(location_current, self._location_business)
-
-                    print(f"\nEl empleado {staff['nombres']} se encuentra en: \n{location_current}, a {distance.distance(distance_staff[0], distance_staff[1]).km:.2f} kilometros del la empresa")
-
+                    location_current = self.get_location(staff['current_location'])
+                    distance_staff = self._long_lat(location_current, self.get_location(self.address_company))
+                    break
+            
             if not found_staff:
-                print("\nEl empleado ingresado no existe o copio mal el nombre.")
+                print("\nEl empleado ingresado no existe, o copió mal el nombre.")
+                return None
+            
+            return answer_name, location_current, distance_staff
 
-            pregunta_salir = input("\n¿Desea buscar otro empleado? Y/n: ")
-            if pregunta_salir in ("Y", "y"):
-                os.system("cls")
-                pass
+        flag = True
+        
+        while flag:
+            
+            staff_location_distance = _find_staff()
+            
+            if staff_location_distance:
+                print(f"\nEl empleado {staff_location_distance[0]} se encuentra en: \n{staff_location_distance[1]}.\nEstá a {distance.distance(staff_location_distance[2][0], staff_location_distance[2][1]).km:.2f} kilometros del la empresa")
+
+            get_out = input("\n¿Desea buscar otro empleado? Y/n: ")
+            if get_out in ("Y", "y"): continue
             else:
                 flag = False
                 self.main_menu()
+                
 
-    def find_this_staff_vehicle(self, option):
-        """ Aquí hubicamos el personal o vehiculo más cercano a recojer un paquete """
+    def _find_this_staff_vehicle(self, option):
+        """We locate personnel or vehicle closest to a package
 
-        print("=============================================================")
-        number_ubication_pkg = input("\nIngrese el número del paquete a recojer y mostraremos personal más cercano a el: ")
+        Args:
+            option ([int], 1, 2): Defines whether to search for a staff or a vehicle
+        """
+
         location_pkg = ""
         name_staff_vehicle = ""
-        location_staff_vehicle = ""
-        staff_or_vehicle_found = []
+        # staff_or_vehicle_found = []
         no_exist_pkg = True
-
-        if number_ubication_pkg.isnumeric():
-            # obtenemos la ubicacion de paquete
-            for locations in range(len(self.location_pkgs)):
-                for key, value in self.location_pkgs[locations].items():
-                    if key == int(number_ubication_pkg):
+        
+        print(f"{'':=>50s}")
+        number_location_pkg = input("\nIngrese el número de orden del paquete a recojer y mostraremos personal más cercano a el, o 99 para salir: ")
+        
+        while no_exist_pkg:
+            if number_location_pkg == "99":
+                return
+            
+            if not number_location_pkg.isnumeric():
+                number_location_pkg = input("\nSolo ingrese el número de orden que aparece al final de la ubicación del paquete, o 99 para salir: ")
+                time.sleep(4)
+                continue
+            
+            else:
+                # We get the location of a package
+                for key, value in self.cant_pkgs.items():
+                    if key == int(number_location_pkg):
                         location_pkg = value
                         no_exist_pkg = False
-        
-        else:
-            print("\nIngrese el número que aparece al final de la ubicación del paquete.")
-            time.sleep(5)
-            os.system("cls")
+                        break
 
-        if no_exist_pkg:
-            print("\nEl número de paquete elegido no existe, por favor verifique el número al final de cada orden de paquete.")
-            time.sleep(5)
-            return True
+                if no_exist_pkg:
+                    print("\nEl número de orden no existe, por favor verifique que sea correcto.")
+                    number_location_pkg = input("Número de orden: ")
 
         if option == "1":
-            # Obtenemos los vehiculos que tenenemos disponibles en la empresa
+            # Vehicles that we have available in the company
             staff_or_vehicle_found = self.find_vehicles(pickup_pkg=True)
             
         elif option == "2":
-            # Obtenemos el personal que tenenemos disponible en la empresa  
+            # Personnel that we have available in the company 
             staff_or_vehicle_found = self.find_staff(pickup_pkg=True)
             
         for staff_or_vehicle in staff_or_vehicle_found:
-        
-            if option == "1":
-                location_curretn_staff_or_vehicle = self.geolocator.geocode(staff_or_vehicle['current_location'], timeout=self.DEFAULT_SENTINEL)
-            
-            elif option == "2":
-                location_curretn_staff_or_vehicle = self.geolocator.geocode(staff_or_vehicle['direccion'], timeout=self.DEFAULT_SENTINEL)
-            
-            # Obtenemos la distancia entre el personal o vehiculo y el paquete
+            location_curretn_staff_or_vehicle = self.get_location(staff_or_vehicle['current_location'])
+            # Distance between staff or vehicle and package
             distance_pkg_staff_or_vehicle = self._long_lat(location_curretn_staff_or_vehicle, location_pkg)
             distance_obtained = round(distance.distance(distance_pkg_staff_or_vehicle[0], distance_pkg_staff_or_vehicle[1]).km, 2)
 
-            # Buscamos el personal o vehiculo más cercano al paquete
-            if distance_obtained <= self.distance_menor:
-                self.distance_menor = distance_obtained
-                if option == "1":
-                    name_staff_vehicle = staff_or_vehicle['brand']
-                    location_staff_vehicle = staff_or_vehicle['current_location']
-                if option == "2":
-                    name_staff_vehicle = staff_or_vehicle['nombres']
-                    location_staff_vehicle = staff_or_vehicle['direccion']
+            # Find the closest personnel or vehicle to the package
+            if distance_obtained <= self.less_distance:
+                self.less_distance = distance_obtained
+                if option == "1": name_staff_vehicle = staff_or_vehicle['brand']
+                elif option == "2": name_staff_vehicle = staff_or_vehicle['name']
 
-        print(f"\nEl personal mas cercano es: {name_staff_vehicle}, y esta a {self.distance_menor} kilometros del punto de recogida del paquete\n")
+        print(f"\nEl personal mas cercano es: {name_staff_vehicle}, y esta a {self.less_distance} kilometros del punto de recogida del paquete\n")
 
+        self.less_distance = 30
         input("Preciona Enter para continuar")
-
-        self.distance_menor = 30
-        os.system("cls")
     
-    # Busqueda de paquetes
-    def find_pkgs(self):
-        # Lugares donde se van a recojer paquetes
-        pkgs_location = ["Aranjuez, Medellín, Antioquia", "Jardin Botanico, Medellín, Antioquia", "Moravia, Medellin, Antioquia", "Aranjuez, Medellín, Antioquia", "Hospital Consejo de Medellin, Medellín, Antioquia", "La Ceja, Antioquia", "Marinilla, Antioquia"]
-
-        for pkg in range(len(pkgs_location)):
-            direction_exist = False 
-
-            # Obtenemos direccion completa
-            direccion = self.geolocator.geocode(pkgs_location[pkg], timeout=self.DEFAULT_SENTINEL)
-
-            if self.cant_pkgs:
-                for value in self.cant_pkgs.values():
-                    if value == direccion: # Verificamos que la direccion a ingresar no exista ya
-                        direction_exist = True
-                        break
-            
-            if not direction_exist:
-                self.count += 1
-                self.cant_pkgs[self.count] = direccion
-            
-        self.location_pkgs.append(self.cant_pkgs)
-
-        flag = True
-
-        while flag:
-            
-            print("=============================================\n")
-            print("*********** Paquetes por recoger ************\n")
-            print("=============================================\n")
-
-            for locations in range(len(self.location_pkgs)):
-                for key, value in self.location_pkgs[locations].items():
-                    distance_business = self._long_lat(value, self._location_business)
-                    print(f"La ubicación donde se recoje el paquete es: {value}; \n\nEstá a: {distance.distance(distance_business[0], distance_business[1]).km:.2f} kilometros de distancia de la empresa. \n\n(*IMPORTANTE) Número para ubicar el paquete: {key}", end="\n\n")
-                    print("=============================================================")
-
-            chossen_option = input("""
+    
+    def _chossen_option(self):
+        '''Menu of options'''
+        return input("""
 Elija una de las opciones a continuación:
 
-    1) Buscar vehiculos cerca
+    1) Buscar vehículos cerca
     2) Buscar personal cerca
     99) Atrás
 
 Ingrese el número de lo que desea hacer: """)
+    
 
+    def _find_pkgs(self):
+        """
+        Show packages to pick up and menu of options
+        Returns: None
+        """
+        # File with the addresses where packages are collected
+        with open('direcciones_pkg.csv', 'rt', encoding= 'utf8') as pkgs:
+            pkgs_location = csv.reader(pkgs)
+        
+            for locations in pkgs_location:
+                locations_dirt = ','.join(locations)
+                
+                direction = self.get_location(locations_dirt)
+                
+                # Verify that the address to enter is not repeated
+                if direction in self.cant_pkgs.values(): continue
+                
+                self.count += 1
+                self.cant_pkgs[self.count] = direction
+   
+        print(f"{'':=>50s}\n")
+        print(f"{' Paquetes por recoger ':*^50}\n")
+        print(f"{'':=>50s}\n")
+
+        for key, value in self.cant_pkgs.items():
+            distance_business = self._long_lat(value, self.get_location(self.address_company))
+            print(f"La ubicación donde se recoje el paquete es: {value}; \n\nEstá a: {distance.distance(distance_business[0], distance_business[1]).km:.2f} kilometros de distancia de la empresa. \n\n(*IMPORTANTE) Número de orden del paquete: {key}", end="\n\n")
+            print(f"{'':=>50s}")
+        
+        flag = True
+        while flag:
+                
+            chossen_option = self._chossen_option()
+            
             if chossen_option == "1":
-                pkg_exist = self.find_this_staff_vehicle(chossen_option)
-                if pkg_exist:
-                    continue
+                self._find_this_staff_vehicle(chossen_option)
+                continue
 
             elif chossen_option == "2":
-                pkg_exist = self.find_this_staff_vehicle(chossen_option)
-                if pkg_exist:
-                    continue
+                self._find_this_staff_vehicle(chossen_option)
+                continue
 
             elif chossen_option == "99":
                 flag = False
                 self.main_menu()
 
+            else:
+                print("\nSolo ingrese una de las opciones que se muestran")
+                time.sleep(2)
+
 
     def main_menu(self):
-            """ Menú con las opciones principales """
-            
+            """ 
+            Menú con las opciones principales 
+            Return: None
+            """
             os.system("cls")
+            
             answer = input(""" 
-Elija la opción que se adecue a lo que desea hacer:
+Elija la opción para lo que desea hacer:
 
-    1) Ubicar direccion de recibo de un paquete
-    2) Ubicar un vehiculo
+    1) Ubicar dirección de recibo de un paquete
+    2) Ubicar un vehículo
     3) Ubicar personal
     4) Salir
 
@@ -396,24 +374,20 @@ Ingresa el número que identifica lo que deseas hacer: """)
             os.system("cls")
 
             # Ubicacion de paquete
-            if answer == "1":
-                self.find_pkgs()
+            if answer == "1": self._find_pkgs()
 
             # Ubicacion de vehiculo
-            elif answer == "2":
-                self.find_vehicles()
+            elif answer == "2": self.find_vehicles()
 
             # Ubicar personal
-            elif answer == "3":
-               self.find_staff()
+            elif answer == "3": self.find_staff()
 
             elif answer == "4":
                 print("""
-=================
-**             **
-** HASTA LUEGO **
-**     :)      **
-=================""")
+==================
+** See you soon **
+**      :)      **
+==================""")
                 time.sleep(3)
                 os.system("cls")
                 exit()
@@ -421,7 +395,6 @@ Ingresa el número que identifica lo que deseas hacer: """)
 
 if __name__ == "__main__":
     location_resources = LocationResources()
-
     try:
         location_resources.main_menu()
     except KeyboardInterrupt as ex:

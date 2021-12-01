@@ -1,0 +1,37 @@
+[
+    {
+    "brand" : "Toyota",
+    "plate" : "XDF234",
+    "current_location" : "La Milagrosa, Medellín, Antioquia"
+    },
+    {
+    "brand" : "Mercedez Benz",
+    "plate" : "89RTY",
+    "current_location" : "Los colores, Medellín, Antioquia"
+    },
+    {
+    "brand" : "Chevrolet",
+    "plate" : "067EFL",
+    "current_location" : "Carrera 48A Poblado, Medellin, Antioquia"
+    },
+    {
+    "brand" : "Mustang",
+    "plate" : "TYH440",
+    "current_location" : "Laureles, Medellin, Antioquia"
+    },
+    {
+    "brand" : "Audi",
+    "plate" : "TRK779",
+    "current_location" : "San Antonio, Medellin, Antioquia"
+    },
+    {
+    "brand" : "Chevrolet v2",
+    "plate" : "YTU000",
+    "current_location" : "Castilla, Medellin, Antioquia"
+    },
+    {
+    "brand" : "Volvo",
+    "plate" : "KMZ441",
+    "current_location" : "Guarne, Medellin, Antioquia"
+    }
+]

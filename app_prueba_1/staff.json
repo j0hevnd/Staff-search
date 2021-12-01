@@ -1,0 +1,38 @@
+[
+    {
+        "name": "Juana De Arco",
+        "age"   : 20,
+        "current_location" : "Cataluña, Medellín, Antioquia",
+        "telephone" : "3220990099" 
+    },
+    {
+        "name": "Armin Arlert",
+        "age"   : 19,
+        "current_location" : "Caicedo, Medellín, Antioquia",
+        "telephone" : "3125990349" 
+    },
+    {
+        "name": "Darwin Hernan",
+        "age"   : 27,
+        "current_location" : "Santa Elena, Medellín, Antioquia",
+        "telephone" : "3000556054" 
+    },
+    {
+        "name": "Mikasa Ackerman",
+        "age"   : 19,
+        "current_location" : "La Alpujarra, Medellín, Antioquia",
+        "telephone" : "3078965032" 
+    },
+    {
+        "name": "Eren Geager",
+        "age"   : 19,
+        "current_location" : "El Estadio, Medellín, Antioquia",
+        "telephone" : "3078965032" 
+    },
+    {
+        "name": "Diego Díaz",
+        "age"   : 23,
+        "current_location" : "San Cristobal, Medellín, Antioquia",
+        "telephone" : "3078965032" 
+    }
+]
